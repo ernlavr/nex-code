@@ -12,6 +12,7 @@ from __future__ import print_function
 import argparse
 import getpass
 
+import torch
 import torch as pt
 import torch.nn.functional as F
 import torch.nn as nn
@@ -491,6 +492,7 @@ def generateAlpha(model, dataset, dataloader, writer, runpath, suffix="", datalo
   suffix_str = "/%06d" % suffix if isinstance(suffix, int) else "/"+str(suffix)
   # create webgl only when using -predict or finish training
   if not args.no_webgl and suffix =="":
+    pt.cuda.empty_cache()
     info = getMPI(model, dataset.sfm, dataloader = dataloader_train)
 
     outputCompactMPI(info,
@@ -526,6 +528,7 @@ def setLearningRate(optimizer, epoch):
     optimizer.param_groups[1]['lr'] = lr * args.lrc
 
 def train():
+  torch.cuda.empty_cache()
   pt.manual_seed(1)
   np.random.seed(1)
 
@@ -721,9 +724,9 @@ def backupConfigAndCode(runpath):
   t = now.strftime("_%Y_%m_%d_%H:%M:%S")
   with open(model_path + "/args.json", 'w') as out:
     json.dump(vars(args), out, indent=2, sort_keys=True)
-  os.system("cp " + os.path.abspath(__file__) + " " + model_path + "/")
-  os.system("cp " + os.path.abspath(__file__) + " " + model_path + "/" + __file__.replace(".py", t + ".py"))
-  os.system("cp " + model_path + "/args.json " + model_path + "/args" + t + ".json")
+  os.system(("copy " + os.path.abspath(__file__) + " " + model_path + "/").replace("/", "\\"))
+  os.system(("copy " + os.path.abspath(__file__) + " " + model_path + "/" + __file__.replace(".py", t + ".py")).replace("/", "\\"))
+  os.system(("copy " + model_path + "/args.json " + model_path + "/args" + t + ".json").replace("/", "\\"))
 
 
 def loadDataset(dpath):
